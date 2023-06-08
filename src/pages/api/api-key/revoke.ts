@@ -1,59 +1,61 @@
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { CreateApiData } from "@/types/api";
+import { RevokeApiData } from "@/types/api";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
-import { nanoid } from "nanoid";
 import { z } from "zod";
 import { withMethods } from "@/lib/api-middlewares/with-methods";
 
 const handler = async (
   req: NextApiRequest,
-  res: NextApiResponse<CreateApiData>
+  res: NextApiResponse<RevokeApiData>
 ) => {
   try {
-    const user = await getServerSession(req, res, authOptions);
-    if (!user?.user) {
+    const user = await getServerSession(req, res, authOptions).then(
+      (res) => res?.user
+    );
+
+    if (!user) {
       return res.status(401).json({
         error: "Unauthorized to perform this action",
-        createdApiKey: null,
+        success: false,
       });
     }
-    const existingApiKey = await db.apiKey.findFirst({
-      where: { userId: user.user.id, enabled: true },
+    const validApiKey = await db.apiKey.findFirst({
+      where: { userId: user.id, enabled: true },
     });
 
-    if (existingApiKey) {
-      return res.status(400).json({
-        error: "You already have an API key",
-        createdApiKey: null,
+    console.log(validApiKey);
+
+    if (!validApiKey) {
+      return res.status(500).json({
+        error: "This API key could not be revoked",
+        success: false,
       });
     }
 
-    const createApiKey = await db.apiKey.create({
-      data: {
-        userId: user.user.id,
-        key: nanoid(),
-      },
+    await db.apiKey.update({
+      where: { id: validApiKey.id },
+      data: { enabled: false },
     });
 
     return res.status(200).json({
       error: null,
-      createdApiKey: createApiKey,
+      success: true,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         error: error.issues,
-        createdApiKey: null,
+        success: false,
       });
     }
 
     return res.status(500).json({
       error: "Internal server error",
-      createdApiKey: null,
+      success: false,
     });
   }
 };
 
-export default withMethods(["GET"], handler);
+export default withMethods(["POST"], handler);

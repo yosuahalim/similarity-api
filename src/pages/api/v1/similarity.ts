@@ -44,17 +44,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const start = new Date();
 
-    const embeddings = await Promise.all(
-      [text1, text2].map(async (text) => {
-        const res = await openai.createEmbedding({
-          model: "text-embedding-ada-002",
-          input: text,
-        });
-        return res.data.data[0].embedding;
-      })
-    );
+    // const embeddings = await Promise.all(
+    //   [text1, text2].map(async (text) => {
+    //     const res = await openai.createEmbedding({
+    //       model: "text-embedding-ada-002",
+    //       input: text,
+    //     });
+    //     return res.data.data[0].embedding;
+    //   })
+    // );
 
-    const similarity = cosineSimilarity(embeddings[0], embeddings[1]);
+    // const similarity = cosineSimilarity(embeddings[0], embeddings[1]);
+
+    const similarity = cosineSimilarity([1, 2, 3], [1, 2, 4]);
 
     const duration = new Date().getTime() - start.getTime();
 

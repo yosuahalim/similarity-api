@@ -7,6 +7,9 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Similarity API | Home",
   description: "Free API for calculating similarity between two texts.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function Home() {
